@@ -80,15 +80,15 @@ class TestOptions {
                     results.push(yield run()
                         .then((s) => {
                         if (s) {
-                            console.log("Test #" + y + ":", "\x1b[32msuccess\x1b[0m");
+                            console.log("Test #" + (y + 1) + ":", "\x1b[32msuccess\x1b[0m");
                         }
                         else {
-                            console.log("Test #" + y + ":", "\x1b[31mfailed\x1b[0m");
+                            console.log("Test #" + (y + 1) + ":", "\x1b[31mfailed\x1b[0m");
                         }
                         return s;
                     })
                         .catch((err) => {
-                        console.log("Test #" + y + ":", "\x1b[31mfailed\x1b[0m");
+                        console.log("Test #" + (y + 1) + ":", "\x1b[31mfailed\x1b[0m");
                         errors.push(err);
                         return false;
                     }));

@@ -51,7 +51,7 @@ export interface NewPortMappingOpts extends StandardOpts {
     description?: string;
     ttl?: number;
 }
-export declare type DeletePortMappingOpts = StandardOpts;
+export type DeletePortMappingOpts = StandardOpts;
 export interface GetMappingOpts {
     local?: boolean;
     description?: RegExp | string;
