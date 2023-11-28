@@ -1,4 +1,6 @@
-import axios from "axios";
+import http, { IncomingMessage, RequestOptions } from 'node:http'
+import https from 'node:https'
+import { text } from 'node:stream/consumers'
 import { URL } from "url";
 import { XMLParser } from "fast-xml-parser";
 
@@ -16,9 +18,7 @@ export class Device implements IDevice {
     ];
   }
   private async getXML(url: string) {
-    return axios
-      .get(url)
-      .then(({ data }) => new XMLParser().parse(data))
+    return httpRequest(url).then(text).then(data => new XMLParser().parse(data))
       .catch(() => new Error("Failed to lookup device description"));
   }
   public async getService(types: string[]) {
@@ -73,17 +73,16 @@ export class Device implements IDevice {
       "</s:Body>" +
       "</s:Envelope>";
 
-    return axios
-      .post(info.controlURL, body, {
-        headers: {
+    return httpRequest(info.controlURL, {
+      method: 'post',
+      headers: {
           "Content-Type": 'text/xml; charset="utf-8"',
           "Content-Length": "" + Buffer.byteLength(body),
           Connection: "close",
           SOAPAction: JSON.stringify(info.service + "#" + action),
         },
-      })
-      .then(
-        ({ data }) =>
+      }, body)
+      .then(text).then(data =>
           new XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body
       );
   }
@@ -180,4 +179,11 @@ export interface IDevice {
    * @param kvpairs arguments of said action
    */
   run(action: string, kvpairs: (string | number)[][]): Promise<RawResponse>;
+}
+
+function httpRequest(url: string, options: RequestOptions={}, body: string | Buffer=''): Promise<IncomingMessage> {
+  return new Promise((resolve, reject) =>
+    (url.startsWith('https:') ? https : http).request(url, options, async res =>
+      !res.statusCode || res.statusCode >= 400 ? reject(res) : resolve(res)
+    ).on('error', reject).end(body))
 }

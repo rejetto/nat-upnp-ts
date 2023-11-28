@@ -13,7 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Device = void 0;
-const axios_1 = __importDefault(require("axios"));
+const node_http_1 = __importDefault(require("node:http"));
+const node_https_1 = __importDefault(require("node:https"));
+const consumers_1 = require("node:stream/consumers");
 const url_1 = require("url");
 const fast_xml_parser_1 = require("fast-xml-parser");
 class Device {
@@ -27,9 +29,7 @@ class Device {
     }
     getXML(url) {
         return __awaiter(this, void 0, void 0, function* () {
-            return axios_1.default
-                .get(url)
-                .then(({ data }) => new fast_xml_parser_1.XMLParser().parse(data))
+            return httpRequest(url).then(consumers_1.text).then(data => new fast_xml_parser_1.XMLParser().parse(data))
                 .catch(() => new Error("Failed to lookup device description"));
         });
     }
@@ -71,16 +71,16 @@ class Device {
                 ">" +
                 "</s:Body>" +
                 "</s:Envelope>";
-            return axios_1.default
-                .post(info.controlURL, body, {
+            return httpRequest(info.controlURL, {
+                method: 'post',
                 headers: {
                     "Content-Type": 'text/xml; charset="utf-8"',
                     "Content-Length": "" + Buffer.byteLength(body),
                     Connection: "close",
                     SOAPAction: JSON.stringify(info.service + "#" + action),
                 },
-            })
-                .then(({ data }) => new fast_xml_parser_1.XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body);
+            }, body)
+                .then(consumers_1.text).then(data => new fast_xml_parser_1.XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body);
         });
     }
     parseDescription(info) {
@@ -115,3 +115,6 @@ class Device {
 }
 exports.Device = Device;
 exports.default = Device;
+function httpRequest(url, options = {}, body = '') {
+    return new Promise((resolve, reject) => (url.startsWith('https:') ? node_https_1.default : node_http_1.default).request(url, options, (res) => __awaiter(this, void 0, void 0, function* () { return !res.statusCode || res.statusCode >= 400 ? reject(res) : resolve(res); })).on('error', reject).end(body));
+}

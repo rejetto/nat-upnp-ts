@@ -19,7 +19,6 @@
     "test": "node ./build/test/index.test.js"
   },
   "dependencies": {
-    "axios": "^1.6.1",
     "fast-xml-parser": "^4.0.0-beta.8"
   }
 }
