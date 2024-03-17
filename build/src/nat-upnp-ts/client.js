@@ -60,36 +60,30 @@ class Client {
         return __awaiter(this, void 0, void 0, function* () {
             const { gateway, address } = yield this.getGateway();
             let i = 0;
-            let end = false;
             const results = [];
             while (true) {
-                const data = (yield gateway
-                    .run("GetGenericPortMappingEntry", [["NewPortMappingIndex", i++]])
-                    .catch((err) => {
-                    if (i !== 1) {
-                        end = true;
-                    }
-                }));
-                if (end)
-                    break;
-                const key = Object.keys(data || {}).find((k) => /^GetGenericPortMappingEntryResponse/.test(k));
+                const data = yield gateway.run("GetGenericPortMappingEntry", [["NewPortMappingIndex", i++]])
+                    .catch(() => { });
+                if (!data)
+                    break; // finished
+                const key = Object.keys(data).find((k) => k.startsWith('GetGenericPortMappingEntryResponse'));
                 if (!key) {
                     throw new Error("Incorrect response");
                 }
                 const res = data[key];
                 const result = {
                     public: {
-                        host: (typeof res.NewRemoteHost === "string" && res.NewRemoteHost) || "",
-                        port: parseInt(res.NewExternalPort, 10),
+                        host: res.NewRemoteHost || "",
+                        port: Number(res.NewExternalPort),
                     },
                     private: {
                         host: res.NewInternalClient,
-                        port: parseInt(res.NewInternalPort, 10),
+                        port: Number(res.NewInternalPort),
                     },
                     protocol: res.NewProtocol.toLowerCase(),
-                    enabled: res.NewEnabled === "1",
+                    enabled: res.NewEnabled == 1,
                     description: res.NewPortMappingDescription,
-                    ttl: parseInt(res.NewLeaseDuration, 10),
+                    ttl: Number(res.NewLeaseDuration),
                     // temporary, so typescript will compile
                     local: false,
                 };

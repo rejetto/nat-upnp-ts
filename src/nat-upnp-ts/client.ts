@@ -52,23 +52,15 @@ export class Client implements IClient {
   public async getMappings(options: GetMappingOpts = {}) {
     const { gateway, address } = await this.getGateway();
     let i = 0;
-    let end = false;
     const results = [];
 
     while (true) {
-      const data = (await gateway
-        .run("GetGenericPortMappingEntry", [["NewPortMappingIndex", i++]])
-        .catch((err) => {
-          if (i !== 1) {
-            end = true;
-          }
-        }))!;
+      const data = await gateway.run("GetGenericPortMappingEntry", [["NewPortMappingIndex", i++]])
+        .catch(() => {})
+      if (!data) break; // finished
 
-      if (end) break;
-
-      const key = Object.keys(data || {}).find((k) =>
-        /^GetGenericPortMappingEntryResponse/.test(k)
-      );
+      const key = Object.keys(data).find((k) =>
+        k.startsWith('GetGenericPortMappingEntryResponse'));
 
       if (!key) {
         throw new Error("Incorrect response");
@@ -78,18 +70,17 @@ export class Client implements IClient {
 
       const result: Mapping = {
         public: {
-          host:
-            (typeof res.NewRemoteHost === "string" && res.NewRemoteHost) || "",
-          port: parseInt(res.NewExternalPort, 10),
+          host: res.NewRemoteHost || "",
+          port: Number(res.NewExternalPort),
         },
         private: {
           host: res.NewInternalClient,
-          port: parseInt(res.NewInternalPort, 10),
+          port: Number(res.NewInternalPort),
         },
         protocol: res.NewProtocol.toLowerCase(),
-        enabled: res.NewEnabled === "1",
+        enabled: res.NewEnabled == 1,
         description: res.NewPortMappingDescription,
-        ttl: parseInt(res.NewLeaseDuration, 10),
+        ttl: Number(res.NewLeaseDuration),
         // temporary, so typescript will compile
         local: false,
       };

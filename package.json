@@ -1,13 +1,13 @@
 {
-  "name": "nat-upnp-ts",
+  "name": "nat-upnp-rejetto",
   "version": "2.0.1",
   "main": "build/src/index",
-  "author": "Fedor Indutny <fedor@indutny.com>, SimplyLinn <https://github.com/SimplyLinn>, Kaden Sharpin <http://github.com/kaden-sharpin>",
+  "author": "Fedor Indutny <fedor@indutny.com>, SimplyLinn <https://github.com/SimplyLinn>, Kaden Sharpin <http://github.com/kaden-sharpin>, Massimo Melina <a@rejetto.com>",
   "homepage": "https://github.com/kaden-sharpin/nat-upnp-ts",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/kaden-sharpin/nat-upnp-ts.git"
+    "url": "http://github.com/rejetto/nat-upnp-ts.git"
   },
   "devDependencies": {
     "@types/node": "^17.0.6",
