@@ -19,6 +19,6 @@
     "test": "tsc && node ./build/test/index.test.js"
   },
   "dependencies": {
-    "fast-xml-parser": "^4.0.0-beta.8"
+    "fast-xml-parser": "^4.5.0"
   }
 }
