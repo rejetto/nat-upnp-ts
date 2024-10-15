@@ -53,25 +53,9 @@ export class Device implements IDevice {
     const info = await this.getService(this.services);
 
     const body =
-      '<?xml version="1.0"?>' +
-      "<s:Envelope " +
-      'xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ' +
-      's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">' +
-      "<s:Body>" +
-      "<u:" +
-      action +
-      " xmlns:u=" +
-      JSON.stringify(info.service) +
-      ">" +
-      args.reduce(
-        (p, [a, b]) => p + `<${a ?? ""}>${b ?? ""}</${a ?? ""}>`,
-        ""
-      ) +
-      "</u:" +
-      action +
-      ">" +
-      "</s:Body>" +
-      "</s:Envelope>";
+      `<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+        <s:Body><u:${action} xmlns:u=${JSON.stringify(info.service)}>${args.reduce((p, [a, b]) => p + `<${a ?? ''}>${b ?? ''}</${a ?? ''}>`, '')}</u:${action}>
+        </s:Body></s:Envelope>`;
 
     return httpRequest(info.controlURL, {
       method: 'post',
@@ -82,9 +66,12 @@ export class Device implements IDevice {
           SOAPAction: JSON.stringify(info.service + "#" + action),
         },
       }, body)
-      .then(text).then(data =>
-          new XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body
-      );
+      .then(text, text).then(data => {
+          const res = new XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body
+          if (res.Fault)
+            throw res.Fault.detail?.UPnPError || res.Fault
+          return res
+        });
   }
   public parseDescription(info: { device?: RawDevice }) {
     const services: RawService[] = [];

@@ -55,22 +55,9 @@ class Device {
     run(action, args) {
         return __awaiter(this, void 0, void 0, function* () {
             const info = yield this.getService(this.services);
-            const body = '<?xml version="1.0"?>' +
-                "<s:Envelope " +
-                'xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ' +
-                's:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">' +
-                "<s:Body>" +
-                "<u:" +
-                action +
-                " xmlns:u=" +
-                JSON.stringify(info.service) +
-                ">" +
-                args.reduce((p, [a, b]) => p + `<${a !== null && a !== void 0 ? a : ""}>${b !== null && b !== void 0 ? b : ""}</${a !== null && a !== void 0 ? a : ""}>`, "") +
-                "</u:" +
-                action +
-                ">" +
-                "</s:Body>" +
-                "</s:Envelope>";
+            const body = `<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+        <s:Body><u:${action} xmlns:u=${JSON.stringify(info.service)}>${args.reduce((p, [a, b]) => p + `<${a !== null && a !== void 0 ? a : ''}>${b !== null && b !== void 0 ? b : ''}</${a !== null && a !== void 0 ? a : ''}>`, '')}</u:${action}>
+        </s:Body></s:Envelope>`;
             return httpRequest(info.controlURL, {
                 method: 'post',
                 headers: {
@@ -80,7 +67,13 @@ class Device {
                     SOAPAction: JSON.stringify(info.service + "#" + action),
                 },
             }, body)
-                .then(consumers_1.text).then(data => new fast_xml_parser_1.XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body);
+                .then(consumers_1.text, consumers_1.text).then(data => {
+                var _a;
+                const res = new fast_xml_parser_1.XMLParser({ removeNSPrefix: true }).parse(data).Envelope.Body;
+                if (res.Fault)
+                    throw ((_a = res.Fault.detail) === null || _a === void 0 ? void 0 : _a.UPnPError) || res.Fault;
+                return res;
+            });
         });
     }
     parseDescription(info) {
