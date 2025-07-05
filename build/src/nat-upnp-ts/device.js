@@ -29,8 +29,7 @@ class Device {
     }
     getXML(url) {
         return __awaiter(this, void 0, void 0, function* () {
-            return httpRequest(url).then(consumers_1.text).then(data => new fast_xml_parser_1.XMLParser().parse(data))
-                .catch(() => new Error("Failed to lookup device description"));
+            return httpRequest(url).then(consumers_1.text).then(data => new fast_xml_parser_1.XMLParser().parse(data));
         });
     }
     getService(types) {

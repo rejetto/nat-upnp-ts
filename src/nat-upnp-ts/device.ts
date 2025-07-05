@@ -19,7 +19,6 @@ export class Device implements IDevice {
   }
   private async getXML(url: string) {
     return httpRequest(url).then(text).then(data => new XMLParser().parse(data))
-      .catch(() => new Error("Failed to lookup device description"));
   }
   public async getService(types: string[]) {
     return this.getXML(this.description).then(({ root: xml }) => {
