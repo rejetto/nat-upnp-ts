@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TestOptions = exports.setupTest = void 0;
 const queue = [];
@@ -20,16 +11,13 @@ function footer(n) {
     arr.length = n;
     console.log("\n===========" + arr.fill("=").join("") + "===========\n");
 }
-function runNextInQueue(prev) {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        footer(prev.length);
-        const [name, opts] = (_a = queue.shift()) !== null && _a !== void 0 ? _a : [];
-        if (!name || !opts)
-            return;
-        header(name);
-        opts.startTests().then(() => runNextInQueue(name));
-    });
+async function runNextInQueue(prev) {
+    footer(prev.length);
+    const [name, opts] = queue.shift() ?? [];
+    if (!name || !opts)
+        return;
+    header(name);
+    opts.startTests().then(() => runNextInQueue(name));
 }
 function setupTest(testName, callback) {
     const testOptions = new TestOptions();
@@ -60,51 +48,48 @@ class TestOptions {
     run(desc, callback) {
         this.tests.push([desc, callback]);
     }
-    startTests() {
-        var _a, _b;
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.isRunning)
-                return;
-            this.isRunning = true;
-            const testCount = this.testCount;
-            const tests = [...this.tests];
-            const runBefore = (_a = this.runBeforeCallback) !== null && _a !== void 0 ? _a : (() => null);
-            const runAfter = (_b = this.runAfterCallback) !== null && _b !== void 0 ? _b : (() => null);
-            for (let x = 0; x < tests.length; x++) {
-                const [testName, run] = tests[x];
-                const results = [];
-                const errors = [];
-                console.log("\n" + testName);
-                for (let y = 0; y < testCount; y++) {
-                    runBefore();
-                    results.push(yield run()
-                        .then((s) => {
-                        if (s) {
-                            console.log("Test #" + (y + 1) + ":", "\x1b[32msuccess\x1b[0m");
-                        }
-                        else {
-                            console.log("Test #" + (y + 1) + ":", "\x1b[31mfailed\x1b[0m");
-                        }
-                        return s;
-                    })
-                        .catch((err) => {
+    async startTests() {
+        if (this.isRunning)
+            return;
+        this.isRunning = true;
+        const testCount = this.testCount;
+        const tests = [...this.tests];
+        const runBefore = this.runBeforeCallback ?? (() => null);
+        const runAfter = this.runAfterCallback ?? (() => null);
+        for (let x = 0; x < tests.length; x++) {
+            const [testName, run] = tests[x];
+            const results = [];
+            const errors = [];
+            console.log("\n" + testName);
+            for (let y = 0; y < testCount; y++) {
+                runBefore();
+                results.push(await run()
+                    .then((s) => {
+                    if (s) {
+                        console.log("Test #" + (y + 1) + ":", "\x1b[32msuccess\x1b[0m");
+                    }
+                    else {
                         console.log("Test #" + (y + 1) + ":", "\x1b[31mfailed\x1b[0m");
-                        errors.push(err);
-                        return false;
-                    }));
-                    runAfter();
-                }
-                if (!results.some((el) => !el)) {
-                    // success
-                    console.log("Testcase: \x1b[32msuccess\x1b[0m");
-                }
-                else {
-                    // failed
-                    errors.forEach((err) => console.error(err));
-                    console.log("Testcase: \x1b[31mfailed with", errors.length, "errors\x1b[0m");
-                }
+                    }
+                    return s;
+                })
+                    .catch((err) => {
+                    console.log("Test #" + (y + 1) + ":", "\x1b[31mfailed\x1b[0m");
+                    errors.push(err);
+                    return false;
+                }));
+                runAfter();
             }
-        });
+            if (!results.some((el) => !el)) {
+                // success
+                console.log("Testcase: \x1b[32msuccess\x1b[0m");
+            }
+            else {
+                // failed
+                errors.forEach((err) => console.error(err));
+                console.log("Testcase: \x1b[31mfailed with", errors.length, "errors\x1b[0m");
+            }
+        }
     }
     get isTestRunning() {
         return this.isRunning;

@@ -9,9 +9,8 @@ const os_1 = __importDefault(require("os"));
 const events_1 = __importDefault(require("events"));
 class Ssdp {
     constructor(options) {
-        var _a;
         this.options = options;
-        this.sourcePort = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.sourcePort) || 0;
+        this.sourcePort = this.options?.sourcePort || 0;
         this.bound = false;
         this.boundCount = 0;
         this.closed = false;
@@ -21,10 +20,9 @@ class Ssdp {
         this.ssdpEmitter = new events_1.default();
         // Create sockets on all external interfaces
         const interfaces = os_1.default.networkInterfaces();
-        this.sockets = Object.keys(interfaces).reduce((arr, key) => {
-            var _a, _b;
-            return arr.concat((_b = (_a = interfaces[key]) === null || _a === void 0 ? void 0 : _a.filter((item) => !item.internal).map((item) => this.createSocket(item))) !== null && _b !== void 0 ? _b : []);
-        }, []);
+        this.sockets = Object.keys(interfaces).reduce((arr, key) => arr.concat(interfaces[key]
+            ?.filter((item) => !item.internal)
+            .map((item) => this.createSocket(item)) ?? []), []);
     }
     createSocket(iface) {
         const socket = dgram_1.default.createSocket(iface.family === "IPv4" ? "udp4" : "udp6");
@@ -116,8 +114,7 @@ function parseMimeHeader(headerStr) {
     const lines = headerStr.split(/\r\n/g);
     // Parse headers from lines to hashmap
     return lines.reduce((headers, line) => {
-        var _a;
-        const [_, key, value] = (_a = line.match(/^([^:]*)\s*:\s*(.*)$/)) !== null && _a !== void 0 ? _a : [];
+        const [_, key, value] = line.match(/^([^:]*)\s*:\s*(.*)$/) ?? [];
         if (key && value) {
             headers[key.toLowerCase()] = value;
         }
