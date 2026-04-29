@@ -47,8 +47,7 @@ class Client {
         let i = 0;
         const results = [];
         while (true) {
-            const data = await gateway.run("GetGenericPortMappingEntry", [["NewPortMappingIndex", i++]])
-                .catch(() => { });
+            const data = await getGenericPortMappingEntry(gateway, i++);
             if (!data)
                 break; // finished
             const key = Object.keys(data).find((k) => k.startsWith('GetGenericPortMappingEntryResponse'));
@@ -125,6 +124,23 @@ class Client {
     }
 }
 exports.Client = Client;
+async function getGenericPortMappingEntry(gateway, index) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            return await gateway.run("GetGenericPortMappingEntry", [["NewPortMappingIndex", index]]);
+        }
+        catch (e) {
+            if (isEndOfMappings(e))
+                return undefined;
+            // some routers intermittently reset enumeration requests, but later indexes may still be valid
+            if (attempt === 2)
+                throw e;
+        }
+    }
+}
+function isEndOfMappings(e) {
+    return typeof e === 'object' && e !== null && 'errorCode' in e && e.errorCode === 713;
+}
 function normalizeOptions(options) {
     function toObject(addr) {
         if (typeof addr === "number")
