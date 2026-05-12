@@ -90,6 +90,17 @@ class Device {
 }
 exports.Device = Device;
 exports.default = Device;
-function httpRequest(url, options = {}, body = '') {
-    return new Promise((resolve, reject) => (url.startsWith('https:') ? node_https_1.default : node_http_1.default).request(url, options, async (res) => !res.statusCode || res.statusCode >= 400 ? reject(res) : resolve(res)).on('error', reject).end(body));
+async function httpRequest(url, options = {}, body = '') {
+    try {
+        return await request();
+    }
+    catch (e) {
+        // some routers reset SOAP sockets intermittently, so replay the same buffered request once
+        if (e?.message !== 'socket hang up')
+            throw e;
+        return await request();
+    }
+    function request() {
+        return new Promise((resolve, reject) => (url.startsWith('https:') ? node_https_1.default : node_http_1.default).request(url, options, async (res) => !res.statusCode || res.statusCode >= 400 ? reject(res) : resolve(res)).on('error', reject).end(body));
+    }
 }
